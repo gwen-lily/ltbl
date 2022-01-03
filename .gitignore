@@ -1,0 +1,8 @@
+input*
+output*
+venv*
+.idea*
+.ipynb*
+__pycache__*
+*.pynb
+*.json
