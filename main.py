@@ -16,6 +16,7 @@ from time import sleep
 import datetime as dt
 import pandas as pd
 import sys
+import argparse
 
 from colorthief import ColorThief
 import extcolors
@@ -101,18 +102,18 @@ def get_empty_palette_df():
 
 
 def extract_palette(filepath: pathlib.Path, k: int, radius: int) -> Iterable[Tuple[int]]:
-    # pil_image = Image.open(filepath).convert('RGB').resize(2*(QUANTIZED_DIMENSION,))
-    # image = np.array(pil_image)[:, :, ::-1].copy()
 
     def sanitize_rgb_tuple(rgb: Tuple[int]) -> Tuple[int]:
         return tuple(map(lambda x: int(min([255, max([0, x])])), rgb))
 
-    filepath_gauss = filepath_plus_n(GAUSS_DIR.joinpath(filepath.stem + '.png'), additional_label='gauss')
-    filepath_quant = filepath_plus_n(QUANT_DIR.joinpath(filepath.stem + '.png'), additional_label='quant')
+    filepath_gauss = gauss_dir.joinpath(filepath.stem + '-gauss' + '.png')
+    filepath_quant = quant_dir.joinpath(filepath.stem + '-quant' + '.png')
 
     image_raw = Image.open(filepath)
     image_gauss = image_raw.filter(ImageFilter.GaussianBlur(radius))
-    image_gauss.save(filepath_gauss)
+
+    if save_palette_val:
+        image_gauss.save(filepath_gauss)
 
     # read gauss and convert from RGB >> L*a*b space and then reshape to feature vector
     image = cv2.imread(str(filepath_gauss))
@@ -341,7 +342,7 @@ def random_color_walk(colors: List[Tuple[Union[int, float]]],
         lightshow_now = dt.datetime.now()
 
 
-def generate_palette_grid(grid_name: str, save_palette: bool = True, display_palette: bool = False, *colors: tuple):
+def generate_palette_grid(grid_name: str, *colors: tuple):
     grid_dim = int(np.ceil(np.sqrt(len(colors))))
     quadrant_size = 128
     font_size = 16
@@ -369,12 +370,11 @@ def generate_palette_grid(grid_name: str, save_palette: bool = True, display_pal
         palette_draw.text((x, ymid + 1 * text_offset), 'grey_delta: {:.3f}'.format(delta_grey))
         palette_draw.text((x, ymid + 2 * text_offset), 'nn_delta: {:.3f}'.format(delta_nn))
 
-    if display_palette:
+    if display_palette_val:
         palette_image.show()
 
-    if save_palette:
-        filepath_palette = PALETTE_DIR.joinpath(grid_name + '.png')
-        # filepath_palette = filepath_plus_n(filepath_palette, additional_label='palette')
+    if save_palette_val:
+        filepath_palette = palette_dir.joinpath(grid_name + '.png')
         palette_image.save(filepath_palette)
 
 
@@ -382,9 +382,6 @@ def get_palette(
         name: str,
         colors: int = 10,
         blur_radius: int = 4,
-        save_palette: bool = True,
-        display_palette: bool = False,
-        filter_greys: bool = True,
         *image_filepaths: pathlib.Path
 ) -> List[Tuple[int]]:
     # assert all(fp.exists() for fp in filepaths)
@@ -401,16 +398,15 @@ def get_palette(
         palette = extract_palette(img_fp, colors, blur_radius)
         full_palette.extend(palette)
 
-        if save_palette or display_palette:
-            generate_palette_grid(img_fp.stem, save_palette, display_palette, *palette)
+        if save_palette_val or display_palette_val:
+            generate_palette_grid(img_fp.stem, *palette)
 
-    full_palette = remove_greys(full_palette) if filter_greys else full_palette
+    full_palette = remove_greys(full_palette) if filter_greys_val else full_palette
 
-    if save_palette:
-        generate_palette_grid(name, save_palette, display_palette, *full_palette)
+    if save_palette_val:
+        generate_palette_grid(name, *full_palette)
 
-        full_palette_csv_filepath = PALETTE_DIR.joinpath(name + '.csv')
-        # full_palette_csv_filepath = filepath_plus_n(full_palette_csv_filepath, additional_label='palette')
+        full_palette_csv_filepath = palette_dir.joinpath(name + '.csv')
         full_palette_df = get_empty_palette_df()
 
         for rgb in full_palette:
@@ -432,27 +428,104 @@ def load_palette(filepath: pathlib.Path) -> List[Tuple[float]]:
 
 
 if __name__ == '__main__':
+    program_start_timestamp = str(int(dt.datetime.utcnow().timestamp()))
 
-    palette_name = 'akiko-utau-oka'
-    images_dir = pathlib.Path('general')
-    filepaths = [f for f in images_dir.iterdir() if is_unprocessed_image(f)]     # and palette_name in f.stem]
+    # arg parsing ######################################################################################################
+    parser = argparse.ArgumentParser(
+        description="bedevere's palette analyzer and philips hue light controller: let-there-be-light",
+    )
+    parser.add_argument('-name', '-n',
+                        type=str, metavar='N', default='palette-' + program_start_timestamp,
+                        help="""Provide a name for the palette to be saved, the default is the utc timestamp at 
+                        program start.""")
+    parser.add_argument('-input', '-i',
+                        type=str, metavar='IN', default='input',
+                        help='Provide a file or directory containing files, the default is "input"')
+    parser.add_argument('-colors', '-c',
+                        type=int, metavar='C', default='10',
+                        help='Choose the number of colors to pick per image, the default is 10.')
+    parser.add_argument('-radius', '-r',
+                        type=int, metavar='R', default=4,
+                        help='Choose the gaussian blur radius applied to the image before clustering, the default is 4')
+    parser.add_argument('-output', '-o',
+                        type=str, metavar='OUT', default='output',
+                        help='Provide the output directory, default is "output"')
+    parser.add_argument('--save', '--s',
+                        action='store_true',
+                        help='Enable to save palette information in the specified output directory')
+    parser.add_argument('--filter-grey', '--fg',
+                        action='store_true',
+                        help='Enable to filter out sufficiently grey colors')
+    parser.add_argument('--display', '--d',
+                        action='store_true',
+                        help='Enable to display palette images during operation')
+    parser.add_argument('-transition', '-t',
+                        type=str.lower, metavar='T', default='fast',
+                        help='Specify transition speed: fast / slow')
+    parser.add_argument('-brightness', '-b',
+                        type=str.lower, metavar='B', default='bright',
+                        help='Specify brightness value: bright / mid / dim')
+    parser.add_argument('-time-limit', '-tl',
+                        type=int, metavar='TL', default=3600,
+                        help='Specify the time limit in seconds')
+    args = parser.parse_args()
 
-    colors_val = 5
-    blur_radius_val = 4
-    save_palette_val = True
-    display_palette_val = False
-    filter_greys_val = True
-
-    transition_settings = 'fast'    # see if-else tree below
-    brightness_settings = 'dim'
-    time_limit_val = 7200           # seconds
+    palette_name = args.name
 
     try:
-        palette_colors = load_palette(PALETTE_DIR.joinpath(palette_name + '.csv'))
+        input_dir = pathlib.Path(args.input)
+        assert input_dir.is_dir()
+        image_files = [f for f in input_dir.iterdir() if is_unprocessed_image(f)]
+    except AssertionError:
+        image_files = []
+        if input_dir.is_file() and is_unprocessed_image(input_dir):
+            image_files = [input_dir]
+        else:
+            sys.exit(-1)
 
-    except FileNotFoundError:
-        palette_colors = get_palette(palette_name, colors_val, blur_radius_val, save_palette_val, display_palette_val,
-                                     filter_greys_val, *filepaths)
+    try:
+        output_dir = pathlib.Path(args.output)
+        assert output_dir.is_dir()
+    except AssertionError:
+        if output_dir.exists():
+            sys.exit(-1)
+        else:
+            output_dir.mkdir()
+    finally:
+        palette_dir = output_dir.joinpath(PALETTE_DIR_STEM)
+        quant_dir = output_dir.joinpath(QUANT_DIR_STEM)
+        gauss_dir = output_dir.joinpath(GAUSS_DIR_STEM)
+        output_subdirs = [palette_dir, quant_dir, gauss_dir]
+
+        for subdir in output_subdirs:
+            if not subdir.exists():
+                subdir.mkdir()
+
+    try:
+        colors_val = args.colors
+        assert 0 < colors_val < MAX_COLORS
+    except AssertionError as exc:
+        print(exc)
+        sys.exit(-1)
+
+    try:
+        blur_radius_val = args.radius
+        assert 0 < blur_radius_val < MAX_RADIUS
+    except AssertionError as exc:
+        print(exc)
+        sys.exit(-1)
+
+    save_palette_val = args.save
+    display_palette_val = args.display
+    filter_greys_val = args.filter_grey
+
+    transition_options = ['fast']
+    brightness_options = ['bright', 'mid', 'dim']
+
+    if args.transition in transition_options:
+        transition_settings = args.transition
+    else:
+        transition_settings = 'default'
 
     if transition_settings == 'fast':
         cycle_time_vals = (10, 2)
@@ -461,6 +534,11 @@ if __name__ == '__main__':
         # default values
         cycle_time_vals = (60, 10)      # seconds
         trans_time_vals = (200, 30)     # deciseconds
+
+    if args.brightness in brightness_options:
+        brightness_settings = args.brightness
+    else:
+        brightness_settings = 'default'
 
     if brightness_settings == 'bright':
         brightness_vals = (254, 0)
@@ -471,4 +549,16 @@ if __name__ == '__main__':
     else:
         brightness_vals = (200, 15)     # 0-254 scale
 
-    random_color_walk(palette_colors, cycle_time_vals, trans_time_vals, brightness_vals, int(time_limit_val))
+    time_limit_val = args.time_limit
+
+    # input
+
+    try:
+        palette_filepath = palette_dir.joinpath(palette_name + '.csv')
+        palette_colors = load_palette(palette_filepath)
+
+    except (FileNotFoundError, AssertionError):
+        # assert image_files and len(image_files) > 0
+        palette_colors = get_palette(palette_name, colors_val, blur_radius_val, *image_files)
+
+    random_color_walk(palette_colors, cycle_time_vals, trans_time_vals, brightness_vals, time_limit_val)
