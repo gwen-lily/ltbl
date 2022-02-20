@@ -11,7 +11,7 @@ from sklearn.cluster import MiniBatchKMeans
 import numpy as np
 from typing import List, Tuple, Iterable, Union
 import matplotlib.pyplot as plt
-from rgbxy import Converter, GamutB
+from rgbxy import Converter, GamutC
 from time import sleep
 import datetime as dt
 import pandas as pd
@@ -25,9 +25,8 @@ import colorgram
 from settings import *
 
 logging.basicConfig()
-b = Bridge(HUE_BRIDGE_IP)
-b.connect()     # register the app
-converter = Converter(GamutB)   # A19 bulbs I think I'm right here
+
+converter = Converter(GamutC)   # A19 bulbs I think I'm right here
 
 
 def is_image(filepath: pathlib.Path) -> bool:
@@ -116,8 +115,11 @@ def extract_palette(filepath: pathlib.Path, k: int, radius: int) -> Iterable[Tup
         image_gauss.save(filepath_gauss)
 
     # read gauss and convert from RGB >> L*a*b space and then reshape to feature vector
-    image = cv2.imread(str(filepath_gauss))
-    (h, w) = image.shape[:2]
+    try:
+        image = cv2.imread(str(filepath_gauss))
+        (h, w) = image.shape[:2]
+    except AttributeError:
+        print(filepath_gauss)
     image = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
     image = image.reshape((image.shape[0] * image.shape[1], 3))
 
@@ -222,6 +224,7 @@ def plot_palette(rgb_colors: Iterable[tuple]):
 
 def get_lights():
     return [light for light in b.lights if light.name in ACTIVE_LIGHTS_NAMES]
+
 
 def hue_sandbox(light_id: int):
     b.set_light(light_id, 'xy', [random.random(), random.random()])
@@ -427,6 +430,14 @@ def load_palette(filepath: pathlib.Path) -> List[Tuple[float]]:
     return palette_xy
 
 
+def load_palette_rgb(filepath: pathlib.Path) -> List[Tuple[int]]:
+    palette_df = load_dataframe(filepath)
+    active_df = palette_df.loc[(palette_df['active'] == True)]
+
+    palette_rgb = [tuple(r[:3]) for r in palette_df.to_numpy()]
+    return palette_rgb
+
+
 if __name__ == '__main__':
     program_start_timestamp = str(int(dt.datetime.utcnow().timestamp()))
 
@@ -468,9 +479,15 @@ if __name__ == '__main__':
     parser.add_argument('-time-limit', '-tl',
                         type=int, metavar='TL', default=3600,
                         help='Specify the time limit in seconds')
+    parser.add_argument('-bridge-ip',
+                        type=str, metavar='IP', default=HUE_BRIDGE_IP)
     args = parser.parse_args()
 
     palette_name = args.name
+
+    b = Bridge(args.bridge_ip)
+    b.connect()  # register the app
+
 
     try:
         input_dir = pathlib.Path(args.input)
@@ -556,6 +573,10 @@ if __name__ == '__main__':
     try:
         palette_filepath = palette_dir.joinpath(palette_name + '.csv')
         palette_colors = load_palette(palette_filepath)
+
+        colors_rgb = load_palette_rgb(palette_filepath)
+        plot_palette(colors_rgb)
+
 
     except (FileNotFoundError, AssertionError):
         # assert image_files and len(image_files) > 0

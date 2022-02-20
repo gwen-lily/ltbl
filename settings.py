@@ -3,7 +3,7 @@ import pathlib
 EXAMPLE_MODE = True
 
 # hue bridge settings
-HUE_BRIDGE_IP = '192.168.1.100'
+HUE_BRIDGE_IP = '192.168.1.102'
 HUE_BRIDGE_USERNAME = 'HLtg5osJJGjwVXKt2jmdZuC-UnEe1d1kUmrCPeLq'
 
 # directory settings
