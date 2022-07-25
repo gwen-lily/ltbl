@@ -1,6 +1,6 @@
 input*
 output*
-venv*
+.venv*
 .idea*
 .ipynb*
 __pycache__*
@@ -8,3 +8,5 @@ __pycache__*
 *.json
 bedevere_color.py
 color-phase.ipynb
+scratch.py
+*.egg-info
