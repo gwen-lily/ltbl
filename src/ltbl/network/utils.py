@@ -6,6 +6,18 @@ from .data import NETWORK, BRIDGE_DEVICE_NAME
 
 
 def get_bridge_IP() -> str:
+    """# TODO: Document this
+
+    Returns
+    -------
+    str
+        _description_
+
+    Raises
+    ------
+    RuntimeError
+        _description_
+    """
     # set up and scan network
     nmScan = nmap.PortScanner()
     nmScan.scan(NETWORK)

@@ -12,8 +12,12 @@ from ..color import Palette, colorthief_get_palette
 
 
 class KMeansQuantization:
+    """"""
+
     def extract(__image: Image, /, k: int, radius: int) -> Palette:
         h, w = __image.shape[:2]
+
+        # gaussian blur to nullify edge pixels
         gauss = __image.filter(ImageFilter.GaussianBlur(radius))
 
         # convert from RGB >> L*a*b space and then reshape to feature vector
@@ -31,6 +35,8 @@ class KMeansQuantization:
         lab_image = lab_image.reshape((h, w, 3))
 
         quant = cv2.cvtColor(lab_quant, cv2.COLOR_LAB2BGR)
+        # query the above for values, use collections
+
         image = cv2.cvtColor(lab_image, cv2.COLOR_LAB2BGR)
 
-        return colorthief_get_palette()
+        return colorthief_get_palette(image, k)

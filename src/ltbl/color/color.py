@@ -7,8 +7,54 @@ from typing import List
 from ..data import CONVERTER
 
 
+class ColorNormal:
+    """"""
+
+    def __init__(self, *args, **kwargs):
+        """"""
+
+        match args:
+            case r, g, b:
+                x, y = CONVERTER.rgb_to_xy(r, g, b)
+
+            case x, y:
+                r, g, b = CONVERTER.xy_to_rgb(x, y)
+
+        self.r = r
+        self.g = g
+        self.b = b
+        self.x = x
+        self.y = y
+
+
 @dataclass
 class Color:
+    """_summary_
+
+    Attributes
+    ----------
+
+    _r: int
+
+    _g: int
+
+    _b: int
+
+    _x: float
+
+    _y: float
+
+    Returns
+    -------
+    _type_
+        _description_
+
+    Raises
+    ------
+    ValueError
+        _description_
+    """
+
     _r: int | None = None
     _g: int | None = None
     _b: int | None = None

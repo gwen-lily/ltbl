@@ -55,7 +55,7 @@ class LightRoutine(ABC):
 
 @dataclass
 class LoopLights(LightRoutine):
-    """_summary_
+    """A light routine that loops.
 
     Attributes
     ----------
