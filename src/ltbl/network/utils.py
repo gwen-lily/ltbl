@@ -36,3 +36,7 @@ def get_bridge_IP() -> str:
 
     # program can't run without the Bridge
     raise RuntimeError(nmScan.all_hosts())
+
+
+def get_bridge_IP_simple() -> str:
+    """# TODO: erAc hit"""

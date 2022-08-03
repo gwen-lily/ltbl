@@ -1,138 +1,54 @@
 """Define Color and Palette."""
 
 from __future__ import annotations
-from dataclasses import dataclass
 from typing import List
 
 from ..data import CONVERTER
 
 
-class ColorNormal:
-    """"""
-
-    def __init__(self, *args, **kwargs):
-        """"""
-
-        match args:
-            case r, g, b:
-                x, y = CONVERTER.rgb_to_xy(r, g, b)
-
-            case x, y:
-                r, g, b = CONVERTER.xy_to_rgb(x, y)
-
-        self.r = r
-        self.g = g
-        self.b = b
-        self.x = x
-        self.y = y
-
-
-@dataclass
 class Color:
-    """_summary_
+    """A color is an object with representative attributes for various systems.
+
 
     Attributes
     ----------
 
-    _r: int
+    r : int
+        The red channel in an RGB representation.
 
-    _g: int
+    g : int
+        The green channel in an RGB representation.
 
-    _b: int
+    b : int
+        The blue channel in an RGB representation.
 
-    _x: float
+    x : float
+        The X channel in an XY representation.
 
-    _y: float
-
-    Returns
-    -------
-    _type_
-        _description_
-
-    Raises
-    ------
-    ValueError
-        _description_
+    y : float
+        The Y channel in an XY representation.
     """
 
-    _r: int | None = None
-    _g: int | None = None
-    _b: int | None = None
-    _x: float | None = None
-    _y: float | None = None
+    def __init__(self, *args, **kwargs) -> None:
+        """Define a color by providing variable arguments."""
 
-    def __post_init__(self) -> None:
-        rgb = [self._r, self._g, self._b]
-        xy = [self._x, self._y]
+        match args:
+            case r, g, b:
+                assert all(isinstance(v, int) for v in [r, g, b])
+                x, y = CONVERTER.rgb_to_xy(r, g, b)
 
-        if all(v is not None for v in rgb):
-            x, y = CONVERTER.rgb_to_xy(*rgb)
-            self._x = x
-            self._y = y
-        elif all(v is not None for v in xy):
-            r, g, b = CONVERTER.xy_to_rgb(*xy)
-            self._r = r
-            self._g = g
-            self._b = b
-        else:
-            raise ValueError(f"Could not create Color from rgb: {rgb} & xy: {xy}")
+            case x, y:
+                assert all(isinstance(v, float) for v in [x, y])
+                r, g, b = CONVERTER.xy_to_rgb(x, y)
 
-    # properties
+            case _:
+                raise ValueError(f"Could not create Color from: {args}")
 
-    @property
-    def r(self) -> int:
-        """Return the red channel of an RGB representation, ranging from 0-255.
-
-        Returns
-        -------
-        int
-        """
-        assert self._r is not None
-        return self._r
-
-    @property
-    def g(self) -> int:
-        """Return the green channel of an RGB representation, ranging from 0-255.
-
-        Returns
-        -------
-        int
-        """
-        assert self._g is not None
-        return self._g
-
-    @property
-    def b(self) -> int:
-        """Return the blue channel of an RGB representation, ranging from 0-255.
-
-        Returns
-        -------
-        int
-        """
-        assert self._b is not None
-        return self._b
-
-    @property
-    def x(self) -> float:
-        """Return the x value of an XY representation, ranging from 0.0 - 1.0.
-
-        Returns
-        -------
-        float
-        """
-        assert self._x is not None
-        return self._x
-
-    @property
-    def y(self) -> float:
-        """Return the y value of an XY representation, ranging from 0.0 - 1.0.
-
-        Returns
-        -------
-        float
-        """
-        assert self._y is not None
-        return self._y
+        self.r: int = r
+        self.g: int = g
+        self.b: int = b
+        self.x: float = x
+        self.y: float = y
 
     @property
     def rgb(self) -> tuple[int, int, int]:

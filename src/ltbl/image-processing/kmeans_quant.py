@@ -12,9 +12,25 @@ from ..color import Palette, colorthief_get_palette
 
 
 class KMeansQuantization:
-    """"""
+    """A K-Means Quantization algorithm implementing ExtractionProtocol."""
 
     def extract(__image: Image, /, k: int, radius: int) -> Palette:
+        """extract k colors from a Pillow Image with a gaussian blur with radius radius.
+
+        Parameters
+        ----------
+        __image : Image
+            A Pillow Image object.
+        k : int
+            The number of colors to identify.
+        radius : int
+            The radius of the gaussian blur applied to the image.
+
+        Returns
+        -------
+        Palette
+        """
+
         h, w = __image.shape[:2]
 
         # gaussian blur to nullify edge pixels

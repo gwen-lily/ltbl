@@ -6,7 +6,7 @@ from ..color import Palette
 
 
 class ExtractionProtocol(Protocol):
-    """"""
+    """The Extraction Protocol structure definition."""
 
     def extract(*args, **kwargs) -> Palette:
         """Define the extraction protocol."""
