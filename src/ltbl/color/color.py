@@ -80,15 +80,5 @@ class Color:
         """
         return self.x, self.y
 
-    @property
-    def hex(self) -> str:
-        """Return the rgb representation of a color in hexadecimal.
-
-        Returns
-        -------
-        str
-        """
-        return "%02x%02x%02x" % self.rgb
-
 
 Palette = List[Color]
