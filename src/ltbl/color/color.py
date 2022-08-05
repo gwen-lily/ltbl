@@ -88,7 +88,7 @@ class Color:
         -------
         str
         """
-        return "%02x%02x%02x" % self.rgb
+        return ("%02x" * 3) % self.rgb  # very elegant hex function
 
 
 Palette = List[Color]
