@@ -5,10 +5,17 @@ from dataclasses import dataclass, field
 from typing_extensions import Self
 from datetime import datetime
 from time import sleep
+from random import choice, normalvariate
 
 from phue import Light
 
 from ..color import Palette
+from .data import (
+    DEFAULT_MEAN_RANDOM_CYCLE_TIME,
+    DEFAULT_STDEV_RANDOM_CYCLE_TIME,
+    DEFAULT_LOOP_CYCLE_TIME,
+    MINIMUM_SLEEP_TIME,
+)
 
 
 @dataclass
@@ -63,7 +70,7 @@ class LoopLights(LightRoutine):
         The time between color changes.
     """
 
-    cycle_time: int = 5  # seconds
+    cycle_time: int = DEFAULT_LOOP_CYCLE_TIME  # seconds
     _index: int = field(init=False, default=0)
 
     def loop(self) -> None:
@@ -84,3 +91,41 @@ class LoopLights(LightRoutine):
                     print(light.name, f"xy: {light.xy}")
 
             sleep(self.cycle_time)
+
+
+@dataclass
+class RandomWalk(LightRoutine):
+    """
+
+    Attributes
+    ----------
+    mean_cycle_time : int
+        The mean time between color changes, in seconds.
+    stdev_cycle_time : int
+        The standard deviation of the time between color changes, in seconds.
+
+    """
+
+    mean_cycle_time: int = DEFAULT_MEAN_RANDOM_CYCLE_TIME
+    stdev_cycle_time: int = DEFAULT_STDEV_RANDOM_CYCLE_TIME
+
+    def loop(self) -> None:
+        """Loop through all colors, randomly, at random intervals."""
+
+        start = datetime.utcnow()
+
+        while (datetime.utcnow() - start).seconds < self.time_limit:
+            color = choice(self.palette)
+
+            for light in self.lights:
+                light.xy = color.xy
+
+                if self.verbose:
+                    # TODO: Logging
+                    print(light.name, f"xy: {light.xy}")
+
+            # normal variable X with mean: μ and stdev: σ
+            sleep_time = normalvariate(self.mean_cycle_time, self.stdev_cycle_time)
+            clamped_sleep_time = max([MINIMUM_SLEEP_TIME, sleep_time])
+
+            sleep(clamped_sleep_time)
