@@ -2,6 +2,7 @@
 
 import io
 
+import numpy as np
 from PIL.Image import Image
 from colorthief import ColorThief
 
@@ -53,3 +54,53 @@ def colorthief_get_palette(__image: Image, /, k: int, **kwargs) -> Palette:
     palette = [Color(*color) for color in clamped_palette]
 
     return palette
+
+
+def distance_from_grey(__color: Color, /) -> float:
+    """Return the distance between a color and the grey line in RGB space, normalized from 0 to 1.
+
+    Parameters
+    ----------
+    __color : Color
+        A color.
+
+    Returns
+    -------
+    float
+    """
+
+    p0 = __color.rgb01
+
+    x1 = np.asarray([0, 0, 0])
+    x2 = np.asarray([1, 1, 1])
+    x0 = np.asarray(p0)
+    max_distance = np.sqrt(2 / 3)  # distance from grey line to any corner of R, G, B
+
+    # calculate distance using classic formula and normalize to [0, 1]
+    cross_vector = np.cross(x0 - x1, x0 - x2)
+    distance = np.dot(cross_vector, cross_vector) ** (1 / 2) / np.sqrt(3)
+    normalized_distance = distance / max_distance
+    return normalized_distance
+
+
+def distance_between_colors(__wumbo: Color, __scrumbo: Color, /) -> float:
+    """Return the distance between two colors in RGB-256 space.
+
+    Parameters
+    ----------
+    __wumbo : Color
+        A color, we call it wumbo.
+    __scrumbo : Color
+        Another color, we call it scrumbo.
+
+    Returns
+    -------
+    float
+    """
+
+    rmean = 0.5 * (__wumbo.r + __scrumbo.r)
+    _dr, dg, db = np.asarray(__wumbo.rgb) - np.asarray(__scrumbo.rbg)
+    color_delta = np.sqrt(
+        (2 + rmean / 256) * rmean**2 + 4 * dg**2 + (2 + (255 - rmean) / 256) * db**2
+    )
+    return color_delta
