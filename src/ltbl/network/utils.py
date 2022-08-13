@@ -1,7 +1,7 @@
 """Utilities for the network sub-module."""
 
 import nmap
-
+import requests as req
 from .data import NETWORK, BRIDGE_DEVICE_NAME
 
 
@@ -40,3 +40,6 @@ def get_bridge_IP() -> str:
 
 def get_bridge_IP_simple() -> str:
     """# TODO: erAc hit"""
+
+    buh = req.get('https://discovery.meethue.com')
+
