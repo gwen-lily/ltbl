@@ -2,7 +2,6 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing_extensions import Self
 from datetime import datetime
 from time import sleep
 from random import choice, normalvariate
@@ -11,9 +10,12 @@ from phue import Light
 
 from ..color import Palette
 from .data import (
+    DEFAULT_BRIGHTNESS,
+    DEFAULT_LIGHT_TRANSITION_TIME,
     DEFAULT_MEAN_RANDOM_CYCLE_TIME,
     DEFAULT_STDEV_RANDOM_CYCLE_TIME,
     DEFAULT_LOOP_CYCLE_TIME,
+    DEFAULT_TIME_LIMIT,
     MINIMUM_SLEEP_TIME,
 )
 
@@ -45,9 +47,9 @@ class LightRoutine(ABC):
 
     lights: list[Light]
     palette: Palette
-    transition_time: int  # deciseconds
-    brightness: int  # 0 - 254
-    time_limit: int  # seconds
+    transition_time: int = DEFAULT_LIGHT_TRANSITION_TIME  # deciseconds
+    brightness: int = DEFAULT_BRIGHTNESS  # 0 - 254
+    time_limit: int = DEFAULT_TIME_LIMIT  # seconds
     verbose: bool = True
 
     def __post_init__(self) -> None:
