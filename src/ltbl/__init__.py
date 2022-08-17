@@ -7,3 +7,4 @@
 """
 
 from .color.color import Color
+from .network.bridge import BRIDGE

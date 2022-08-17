@@ -3,7 +3,7 @@
 from __future__ import annotations
 from typing import List
 
-from ..data import CONVERTER
+from .data import CONVERTER
 
 
 class Color:

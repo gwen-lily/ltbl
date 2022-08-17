@@ -27,7 +27,8 @@ def get_bridge_IP() -> str:
         vendor = nmScan[host]["vendor"]
 
         try:
-            name = list(vendor.values)[0]
+            values = list(vendor.values())
+            name = values[0]
             if name == BRIDGE_DEVICE_NAME:
                 return host
 
