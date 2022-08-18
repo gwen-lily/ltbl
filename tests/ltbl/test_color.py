@@ -1,8 +1,8 @@
 """Test the Color module."""
 
-from unittest import TestCase
+from unittest import TestCase, main
 
-from ...src.ltbl import Color
+from ltbl import Color
 
 Red = Color(255, 0, 0)
 Green = Color(0, 255, 0)
@@ -34,7 +34,7 @@ class TestColor(TestCase):
             self.assertEqual(255, channel)
 
     def test_rgb01(self):
-        for channel in Black.rgb:
+        for channel in Black.rgb01:
             self.assertEqual(0, channel)
 
     def test_xy(self):
@@ -45,3 +45,7 @@ class TestColor(TestCase):
         white_hex = "ffffff"
 
         self.assertEqual(white_hex, White.hex.lower())
+
+
+if __name__ == "__main__":
+    main()

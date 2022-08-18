@@ -35,7 +35,12 @@ class Color:
         match args:
             case r, g, b:
                 assert all(isinstance(v, int) for v in [r, g, b])
-                x, y = CONVERTER.rgb_to_xy(r, g, b)
+
+                try:
+                    x, y = CONVERTER.rgb_to_xy(r, g, b)
+                except ZeroDivisionError:
+                    # turn black into the darkest grey
+                    x, y = CONVERTER.rgb_to_xy(1, 1, 1)
 
             case x, y:
                 assert all(isinstance(v, float) for v in [x, y])
