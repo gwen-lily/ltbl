@@ -1,6 +1,6 @@
 """Test the routine sub-module."""
 
-from unittest import TestCase
+from unittest import TestCase, main
 
 from ltbl import BRIDGE, Color
 from ltbl.routine import LoopLights, RandomWalk
@@ -22,3 +22,7 @@ class TestRoutine(TestCase):
     def test_RandomWalk(self):
         routine = RandomWalk(BRIDGE.lights, RGB_Palette, time_limit=_TEST_TIME_LIMIT)
         routine.loop()
+
+
+if __name__ == "__main__":
+    main()
