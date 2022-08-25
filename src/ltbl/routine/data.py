@@ -1,5 +1,10 @@
 """data and definitions for the routine sub-module of the ltbl module."""
 
+from typing import NamedTuple
+
+from ltbl.color.color import Color
+
+
 DEFAULT_MEAN_RANDOM_CYCLE_TIME = 60  # seconds
 DEFAULT_STDEV_RANDOM_CYCLE_TIME = 15  # seconds
 
@@ -10,3 +15,15 @@ MINIMUM_SLEEP_TIME = 5  # seconds
 DEFAULT_BRIGHTNESS = 254  # 0 - 254
 DEFAULT_LIGHT_TRANSITION_TIME = 10  # deciseconds
 DEFAULT_TIME_LIMIT = 3600  # seconds
+
+
+class LightState(NamedTuple):
+    """Data type for storing light state before/after tests.
+
+    Parameters
+    ----------
+    NamedTuple : _type_
+    """
+
+    color: Color
+    brightness: int
