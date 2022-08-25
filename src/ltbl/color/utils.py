@@ -5,8 +5,8 @@ import io
 import numpy as np
 from PIL.Image import Image
 from colorthief import ColorThief
-
-from .color import Palette, Color
+from typing import List
+from .color import Color
 
 
 def clamp_rgb(rgb: tuple[int, int, int]) -> tuple[int, int, int]:
@@ -21,31 +21,37 @@ def clamp_rgb(rgb: tuple[int, int, int]) -> tuple[int, int, int]:
 
     Returns
     -------
-    tuple[int, int, int]
+    r : int
+        Red color channel
+    g : int
+        Green color channel
+    b : int
+        Blue color channel
     """
 
     return tuple(min([max([0, v]), 255]) for v in rgb)
 
 
-def colorthief_get_palette(__image: Image, /, k: int, **kwargs) -> Palette:
+def colorthief_get_palette(image: Image, /, k: int, **kwargs) -> List[Color]:
     """Get a palette from a Pillow Image using ColorThief
 
     This workaround is necessary as ColorThief only works with file objects.
 
     Parameters
     ----------
-    __image : Image
+    image : Image
         A Pillow Image object.
     k : int
         The number of colors.
 
     Returns
     -------
-    Palette
+    palette : List[Color]
+        A color palette of image using ColorThief
     """
 
     with io.BytesIO() as pseudo_file:
-        __image.save(pseudo_file, "PNG")
+        image.save(pseudo_file, "PNG")
         ct = ColorThief(pseudo_file)
 
     # get the raw palette, clamp to 0-255, then transform to Color object.
@@ -56,26 +62,26 @@ def colorthief_get_palette(__image: Image, /, k: int, **kwargs) -> Palette:
     return palette
 
 
-def distance_from_grey(__color: Color, /) -> float:
-    """Return the distance between a color and the grey line in RGB space, normalized from 0 to 1.
+def distance_from_grey(color: Color, /) -> float:
+    """Compute the distance between a color and the grey line in RGB space, normalized from 0.0 to 1.0.
 
     Parameters
     ----------
-    __color : Color
-        A color.
+    color : Color
 
     Returns
     -------
     float
+        Normalized (0.0-1.0) distance between __color and grey line in RGB space.
     """
 
-    p0 = __color.rgb01
+    p0 = color.rgb01
 
     x1 = np.asarray([0, 0, 0])
     x2 = np.asarray([1, 1, 1])
     x0 = np.asarray(p0)
     max_distance = np.sqrt(2 / 3)  # distance from grey line to any corner of R, G, B
-
+    
     # calculate distance using classic formula and normalize to [0, 1]
     cross_vector = np.cross(x0 - x1, x0 - x2)
     distance = np.dot(cross_vector, cross_vector) ** (1 / 2) / np.sqrt(3)
@@ -83,24 +89,26 @@ def distance_from_grey(__color: Color, /) -> float:
     return normalized_distance
 
 
-def distance_between_colors(__wumbo: Color, __scrumbo: Color, /) -> float:
-    """Return the distance between two colors in RGB-256 space.
+def distance_between_colors(color_a: Color, color_b: Color, /) -> float:
+    """Compute the distance between two colors in RGB-256 space.
 
     Parameters
     ----------
-    __wumbo : Color
-        A color, we call it wumbo.
-    __scrumbo : Color
-        Another color, we call it scrumbo.
+    color_a : Color
+    color_b : Color
 
     Returns
     -------
     float
+        Distance between color_a and color_b in RGB-256 space.
     """
 
-    rmean = 0.5 * (__wumbo.r + __scrumbo.r)
-    _dr, dg, db = np.asarray(__wumbo.rgb) - np.asarray(__scrumbo.rbg)
+    rmean = 0.5 * (color_a.r + color_b.r)
+
+    _, dg, db = np.asarray(color_a.rgb) - np.asarray(color_b.rbg)
+
     color_delta = np.sqrt(
         (2 + rmean / 256) * rmean**2 + 4 * dg**2 + (2 + (255 - rmean) / 256) * db**2
     )
+
     return color_delta
